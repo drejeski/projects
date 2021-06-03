@@ -1,0 +1,82 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Apr 29 10:52:22 2021
+
+@author: David
+"""
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import random
+import numpy as np
+
+
+distance=pd.read_csv(r"C:\Users\David\Documents\Grad School\Kstate\ISME 882\distance.csv")
+cities=list(set(distance["stad1"]))
+zscore=[]
+currentsol=[]
+bestsol=[]
+bestsol=cities
+bestsol.append(bestsol[0])
+currentsol=bestsol
+bestj=0
+for j in range (10000):
+    neighbordist=0
+    swappos1=0
+    swappos2=0
+    temp=math.exp((-j/10000))
+    if j==0:
+        neighborsol=currentsol
+        for i in range(len(neighborsol)):
+            #print(neighbordist)
+            #print(i)
+            #print(xsol[i-1],xsol[i])
+            if(i>0):
+                neighbordist=neighbordist+distance[(distance["stad1"]==neighborsol[i-1]) & (distance["stad2"]==neighborsol[i])].dist.iloc[0]
+            
+    else:
+        while swappos1==swappos2:
+                swappos1=random.randint(0,29)
+                swappos2=random.randint(0,29)
+        neighborsol=currentsol
+        swapnum=neighborsol[swappos1]
+        neighborsol[swappos1]=neighborsol[swappos2]
+        neighborsol[swappos2]=swapnum
+        neighborsol[30]=neighborsol[0]
+        for i in range(len(neighborsol)):
+            #print(neighbordist)
+            #print(i)
+            #print(xsol[i-1],xsol[i])
+            if(i>0):
+                neighbordist=neighbordist+distance[(distance["stad1"]==neighborsol[i-1]) & (distance["stad2"]==neighborsol[i])].dist.iloc[0]
+          
+    
+    if j==0:
+        currentsol=neighborsol
+        zscore.append(neighbordist)
+        bestsol=currentsol[:]
+        bestj=j
+    else:
+        if (neighbordist<min(zscore)):
+            currentsol=neighborsol
+            bestsol=neighborsol[:]
+            zscore.append(neighbordist)
+            bestj=j
+        else:
+            zscore.append(neighbordist)
+           
+            if random.random()<temp:
+                currentsol=neighborsol[:]
+        
+
+#%%
+print(bestsol)
+tour=[]
+for i in range(len(bestsol)):
+    tour.append(distance[distance.stad1==bestsol[i]].name1.iloc[0])
+print(zscore[bestj])
+print(tour)
+plt.plot(zscore)
+plt.title("Simulated Annealing TSP Baseball Stadiums")
+plt.xlabel("Iteration")
+plt.ylabel("Total Distance (mi)")
