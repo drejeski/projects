@@ -1,6 +1,6 @@
 # Projects
-1. Simulated annealing of traveling salesman problem using 2-swap neighborhoods
-2. Simulation model of baseball team 
+1. Simulated annealing of traveling salesman problem using 2-swap neighborhoods [Link to code](https://github.com/drejeski/projects/blob/main/TSP%20Simulated%20Annealing)
+2. Simulation model of baseball team [Link to code](https://github.com/drejeski/projects/blob/main/Baseball%20Simulation)
 
 ## Information
 
