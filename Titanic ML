@@ -1,0 +1,79 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Jun  5 08:58:26 2021
+
+@author: David
+"""
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+test=pd.read_csv(r"C:\Users\David\Documents\Python Projects\ML Titanic\test.csv")
+train=pd.read_csv(r"C:\Users\David\Documents\Python Projects\ML Titanic\train.csv")
+pd.set_option("display.max.columns", None)
+
+print(train.info())
+print(train.head())
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.tree import DecisionTreeRegressor
+from sklearn import tree
+from sklearn.datasets import make_classification
+
+
+
+#Data Visualization
+train["Sex"].value_counts().plot(kind='bar',label='train')
+#test["Sex"].value_counts().plot(kind='bar',label='train')
+
+fig,axis=plt.subplots(1,1)
+axis.hist(train["Age"],label='train dataset')
+axis.hist(test["Age"],label='test dataset')
+axis.legend()
+axis.set_title("Age of Passengers")
+axis.set_xlabel("Age")
+axis.set_ylabel("Count")
+
+
+#Mapping String Values to Floats
+di={"male":1,"female":2}
+train["Sex"]=train["Sex"].map(di)
+test["Sex"]=test["Sex"].map(di)
+di={"C":1,"Q":2,"S":3}
+train["Embarked"]=train["Embarked"].map(di)
+test["Embarked"]=test["Embarked"].map(di)
+#Fill NA values
+train=train.fillna(0)
+test=test.fillna(0)
+
+#Splitting Label and Attribute Columns
+outcomes=train["Survived"]
+attributes=train
+attributes=attributes.drop(["Survived","Cabin","Ticket","Name"], axis=1)
+
+#Modeling
+
+#Random Forest
+rfregressor = RandomForestClassifier(n_estimators=20, random_state=0)
+rfregressor.fit(attributes, outcomes)
+predict=rfregressor.predict(attributes)
+print(rfregressor.score(attributes,outcomes))
+
+#Decision Tree
+dtregressor = DecisionTreeRegressor(max_depth=6)
+dtregressor=dtregressor.fit(attributes, outcomes)
+tree.plot_tree(dtregressor)
+predict=dtregressor.predict(attributes)
+print(dtregressor.score(attributes,outcomes))
+#Logistic Regression
+regressor = LogisticRegressionCV(cv=5)
+regressor=regressor.fit(attributes, outcomes)
+predict=regressor.predict(attributes)
+print(regressor.score(attributes,outcomes))
+
+
+#Predicting
+attributes=test
+attributes=attributes.drop(["Cabin","Ticket","Name"], axis=1)
+test["Survived"]=rfregressor.predict(attributes)
