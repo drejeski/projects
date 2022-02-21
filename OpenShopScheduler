@@ -1,0 +1,162 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Feb 14 19:31:08 2022
+
+@author: David
+"""
+import pandas as pd
+import numpy as np
+
+
+class job():
+    def __init__(self, ID):
+        self.ID = ID
+        self.tasks = []
+        self.available = 0
+        self.complete = []
+
+    def update(self, i):
+        self.available = self.time[i]
+
+    def addtask(self, task):
+        self.tasks.append(task)
+
+    def completedtask(self, task):
+        self.complete.append(task)
+
+
+class task():
+    def __init__(self, ID, jobid, time, machine):
+        self.ID = ID
+        self.time = time
+        self.machine = machine
+        self.JobID = jobid
+
+
+def find_job_time(task, starting):
+    notscheduled = 1
+    i = 0
+    jobs_table = jobtable[jobtable.Job == task.JobID].sort_values('Start')
+    jobs_table = jobs_table.reset_index(drop=True)
+    # print(jobs_table)
+    while notscheduled:
+        if jobs_table.empty:
+            earliest_start = 0
+            notscheduled = 0
+        # Find First Fit for jobs
+        elif i == len(jobs_table.Start)-1:
+            earliest_start = jobs_table.Stop[i]
+            notscheduled = 0
+        else:
+            lastend = jobs_table.Stop[i]
+            nextend = jobs_table.Start[i+1]
+            if lastend+task.time <= nextend:
+                notscheduled = 0
+                earliest_start = lastend
+            i += 1
+    print(earliest_start)
+    return (int(earliest_start))
+
+
+def checkjob(task, start, stop):
+    jobs_table = jobtable[jobtable.Job == task.JobID].sort_values('Start')
+    jobs_table = jobs_table.reset_index(drop=True)
+    overlap = 0
+    next_start = 0
+    for row in range(len(jobs_table)):
+        if start >= jobs_table.Start.iloc[row] and start < jobs_table.Stop.iloc[row]:
+            overlap = 1
+            print("overlap")
+            next_start = jobs_table.Stop.iloc[row]
+        elif stop >= jobs_table.Start.iloc[row] and stop < jobs_table.Stop.iloc[row]:
+            overlap = 1
+            print("overlap")
+        elif stop >= jobs_table.Start.iloc[row] and start < jobs_table.Stop.iloc[row]:
+            overlap = 1
+            print("overlap")
+        else:
+            print("no overlap")
+        print(jobs_table.Start.iloc[row],
+              jobs_table.Stop.iloc[row], start, stop)
+
+    return next_start
+
+
+def find_machine_time(earliest_start, task):
+    machines = jobtable[jobtable.Machine == task.machine].sort_values('Start')
+    machines_filter = machines[machines.Stop >= earliest_start]
+    machines_filter = machines_filter.reset_index(drop=True)
+    taskID = task.ID
+    job = task.JobID
+    print(machines_filter)
+    [start, stop] = try_schedule(machines, machines_filter, earliest_start)
+    overlap = checkjob(task, start, stop)
+    if overlap:
+        print("overlap")
+    else:
+        jobtable.loc[len(jobtable.Start)] = [
+            task.machine, job, taskID, start, stop]
+
+
+def try_schedule(machines, machines_filter, earliest_start):
+    notscheduled = 1
+    i = 0
+    while notscheduled:
+        if machines_filter.empty and machines.empty:
+            if earliest_start == 0:
+                # print(1)
+                start = 0
+                stop = start+task.time
+            else:
+                start = earliest_start
+                stop = start + task.time
+            notscheduled = 0
+        elif machines_filter.empty and not machines.empty:
+            # print(3)
+            start = machines.Stop.iloc[-1]
+            stop = machines.Stop.iloc[-1] + task.time
+            notscheduled = 0
+
+        else:
+            if i == len(machines_filter.Start)-1:
+                # print(2)
+                start = machines_filter.Stop[i]
+                stop = machines_filter.Stop[i] + task.time
+                notscheduled = 0
+            else:
+                lastend = machines_filter.Stop[i]
+                nextend = machines_filter.Start[i+1]
+                # print(lastend,nextend)
+                if lastend+task.time <= nextend:
+                    # print(1)
+                    notscheduled = 0
+                    start = lastend
+                    stop = lastend+task.time
+            i += 1
+    return (start, stop)
+
+
+initial_table = {'Machine': [],
+                 "Job": [],
+                 'Task': [],
+                 "Start": [],
+                 "Stop": []}
+
+global jobtable
+jobtable = pd.DataFrame(initial_table)
+jobs = []
+
+for i in range(2):
+    jobs.append(job(i))
+    for j in range(4):
+        time = np.random.randint(4, 18)
+        machine = np.random.randint(1, 3)
+        newtask = task(j, jobs[i].ID, time, machine)
+        jobs[i].tasks.append(newtask)
+
+
+for job in jobs:
+    for task in job.tasks:
+        # print(task.ID)
+        earliest_time = find_job_time(task, 0)
+        find_machine_time(earliest_time, task)
